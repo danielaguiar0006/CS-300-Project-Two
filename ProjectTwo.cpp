@@ -1,3 +1,22 @@
+/**
+ * @file ProjectTwo.cpp
+ * @author Daniel Aguiar
+ * @date 2024-10-19
+ * @brief Advising Assistance Program for ABCU Computer Science Department
+ *
+ * This program allows academic advisors to assist students in planning their courses.
+ * It reads course data from a CSV file and provides functionalities to display a course list,
+ * search for specific courses, and show course prerequisites.
+ *
+ * Usage:
+ *   To run the program, provide the CSV file containing the course data as a command-line argument.
+ *   Example:
+ *       ./ProjectTwoProgram courses.csv
+ *
+ *   If no file is provided, the program will use a default file path.
+ *
+ */
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
