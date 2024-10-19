@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -5,7 +6,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 // --- GLOBAL VARIABLES ---
 enum class MenuOption { LOAD_DATA_STRUCTURE, PRINT_COURSE_LIST, PRINT_COURSE, EXIT_PROGRAM };
@@ -25,19 +25,22 @@ struct Course {
 
 // --- BINARY SEARCH TREE ---
 struct Node {
-    std::string data;
+    Course data;
     Node* left;
     Node* right;
 
-    Node(const std::string& value) : data(value), left(nullptr), right(nullptr) {}
+    Node(Course value) : data(value), left(nullptr), right(nullptr) {}
 };
 
 class BST {
   public:
     BST() : root(nullptr) {}
+    ~BST() {
+        Clear(root);
+    }
 
-    void Insert(const std::string& value) {
-        root = InsertRec(root, value);
+    void Insert(Course value) {
+        root = InsertRec(root, &value);
     }
 
     void PrintInOrder() {
@@ -47,14 +50,15 @@ class BST {
   private:
     Node* root;
 
-    Node* InsertRec(Node* node, const std::string& value) {
+    Node* InsertRec(Node* node, Course* value) {
         if (node == nullptr) {
-            return new Node(value);
+            return new Node(*value);
         }
 
-        if (value < node->data) {
+        // DECIDE WHICH SUBTREE TO INSERT INTO
+        if (value->name < node->data.name) {
             node->left = InsertRec(node->left, value);
-        } else if (value > node->data) {
+        } else if (value->name > node->data.name) {
             node->right = InsertRec(node->right, value);
         }
 
@@ -63,9 +67,23 @@ class BST {
 
     void PrintInOrderRec(Node* node) {
         if (node != nullptr) {
+            // RECURSIVELY PRINT THE LEFT SUBTREE
             PrintInOrderRec(node->left);
-            std::cout << node->data << std::endl;
+
+            // ACTUALLY PRINTING THE COURSE
+            std::cout << node->data.name << ", " << node->data.description << std::endl;
+
+            // RECURSIVELY PRINT THE RIGHT SUBTREE
             PrintInOrderRec(node->right);
+        }
+    }
+
+    // CLEAR THE BST - by recursively deleting all nodes from memory
+    void Clear(Node* node) {
+        if (node != nullptr) {
+            Clear(node->left);
+            Clear(node->right);
+            delete node;
         }
     }
 };
@@ -117,17 +135,7 @@ void LoadDataStructure(BST* structure, const std::string& filePath) {
             course.prerequisites.push_back(row[i]);
         }
 
-        // --- DEBUG ---
-        std::cout << "Course Name: " << course.name << std::endl;
-        std::cout << "Course Description: " << course.description << std::endl;
-        std::cout << "Course Prerequisites: ";
-        for (const auto& prerequisite : course.prerequisites) {
-            std::cout << prerequisite << " ";
-        }
-        std::cout << std::endl;
-        // --- END DEBUG ---
-
-        // TODO: structure->Insert(course);
+        structure->Insert(course);
     }
 }
 
