@@ -4,13 +4,80 @@
 #include <string>
 #include <unordered_map>
 
-// GLOBAL VARIABLES
-enum class MenuOption { LOAD_DATA_STRUCTURE = 1, PRINT_COURSE_LIST = 2, PRINT_COURSE = 3, EXIT_PROGRAM = 9 };
+// --- GLOBAL VARIABLES ---
+enum class MenuOption { LOAD_DATA_STRUCTURE, PRINT_COURSE_LIST, PRINT_COURSE, EXIT_PROGRAM };
 const std::unordered_map<ushort, MenuOption> MENU_OPTIONS_MAP = {{1, MenuOption::LOAD_DATA_STRUCTURE},
                                                                  {2, MenuOption::PRINT_COURSE_LIST},
                                                                  {3, MenuOption::PRINT_COURSE},
                                                                  {9, MenuOption::EXIT_PROGRAM}};
+// --- END GLOBAL VARIABLES ---
 
+// --- BINARY SEARCH TREE ---
+struct Node {
+    std::string data;
+    Node* left;
+    Node* right;
+
+    Node(const std::string& value) : data(value), left(nullptr), right(nullptr) {}
+};
+
+class BST {
+public:
+    BST() : root(nullptr) {}
+
+    void Insert(const std::string& value) {
+        root = InsertRec(root, value);
+    }
+
+    void PrintInOrder() {
+        PrintInOrderRec(root);
+    }
+
+private:
+    Node* root;
+
+    Node* InsertRec(Node* node, const std::string& value) {
+        if (node == nullptr) {
+            return new Node(value);
+        }
+
+        if (value < node->data) {
+            node->left = InsertRec(node->left, value);
+        } else if (value > node->data) {
+            node->right = InsertRec(node->right, value);
+        }
+
+        return node;
+    }
+
+    void PrintInOrderRec(Node* node) {
+        if (node != nullptr) {
+            PrintInOrderRec(node->left);
+            std::cout << node->data << std::endl;
+            PrintInOrderRec(node->right);
+        }
+    }
+};
+// --- END BINARY SEARCH TREE ---
+
+// --- MENU FUNCTIONS ---
+void LoadDataStructure(BST* structure) {
+    // TEST DATA
+    structure->Insert("banana");
+    structure->Insert("apple");
+    structure->Insert("cherry");
+    structure->Insert("date");
+    structure->Insert("4fig");
+    structure->Insert("12grape");
+}
+
+void PrintCourseList(BST* structure) {
+    structure->PrintInOrder();
+}
+// --- END MENU FUNCTIONS ---
+
+
+// --- MENU ---
 void DisplayMenuOptions() {
     std::cout << "\n  1. Load Data Structure" << std::endl;
     std::cout << "  2. Print Course List" << std::endl;
@@ -53,15 +120,17 @@ MenuOption GetValidMenuSelection() {
     }
 }
 
-bool MainMenu() {
+bool MainMenu(BST* structure) {
     MenuOption userSelection = GetValidMenuSelection();
 
     switch (userSelection) {
         case MenuOption::LOAD_DATA_STRUCTURE:
             std::cout << "Loading data structure..." << std::endl;
+            LoadDataStructure(structure);
             break;
         case MenuOption::PRINT_COURSE_LIST:
             std::cout << "Printing course list..." << std::endl;
+            PrintCourseList(structure);
             break;
         case MenuOption::PRINT_COURSE:
             std::cout << "Printing course..." << std::endl;
@@ -74,7 +143,9 @@ bool MainMenu() {
 
     return true;
 }
+// --- END MENU ---
 
+// --- MAIN ENTRY POINT ---
 // NOTE: argv[1] should be able to contain a file path to a CSV file
 // example: ./ProjectTwoProgram CS_300_ABCU_Advising_Program_Input.csv
 int main(int argc, char* argv[]) {
@@ -89,6 +160,7 @@ int main(int argc, char* argv[]) {
     const std::string DEFAULT_FILE_PATH = "CS_300_ABCU_Advising_Program_Input.csv"; // Default file path
     std::string filePath;
     bool isRunning = true;
+    BST structure;
 
     // GET FILE PATH
     if (argc > 1) { // Check if there are any command-line arguments (1 is reserved for the program name)
@@ -105,8 +177,9 @@ int main(int argc, char* argv[]) {
 
     // APPLICATION LOOP
     while (isRunning) {
-        isRunning = MainMenu(); // MainMenu() returns a boolean value indicating whether the program should continue
+        isRunning = MainMenu(&structure); // MainMenu() returns a boolean value indicating whether the program should continue
     }
 
     return 0;
 }
+// --- END MAIN ENTRY POINT ---
