@@ -47,6 +47,17 @@ class BST {
         PrintInOrderRec(root);
     }
 
+    std::optional<Course*> Find(const std::string& courseName) {
+        // Initialize an empty string to hold the courseName in uppercase
+        std::string upperCaseCourseName(courseName.size(), ' ');
+
+        // Convert the courseName to uppercase to match the case of the Course object names
+        std::transform(courseName.begin(), courseName.end(), upperCaseCourseName.begin(), ::toupper);
+
+        // Call the recursive FindRec function with the uppercase courseName
+        return FindRec(root, upperCaseCourseName);
+    }
+
   private:
     Node* root;
 
@@ -75,6 +86,21 @@ class BST {
 
             // RECURSIVELY PRINT THE RIGHT SUBTREE
             PrintInOrderRec(node->right);
+        }
+    }
+
+    std::optional<Course*> FindRec(Node* node, const std::string& upperCaseCourseName) {
+        if (node == nullptr) {
+            return std::nullopt;
+        }
+
+        // DECIDE WHICH SUBTREE TO FIND
+        if (upperCaseCourseName < node->data.name) {
+            return FindRec(node->left, upperCaseCourseName);
+        } else if (upperCaseCourseName > node->data.name) {
+            return FindRec(node->right, upperCaseCourseName);
+        } else {
+            return &node->data;
         }
     }
 
@@ -127,7 +153,10 @@ void LoadDataStructure(BST* structure, const std::string& filePath) {
         Course course;
 
         // Load the name and description of the course into the course object
-        course.name        = row[0];
+        course.name = row[0];
+        // Enforce uppercase for the course name (Used for searching)
+        std::transform(course.name.begin(), course.name.end(), course.name.begin(), ::toupper);
+
         course.description = row[1];
 
         // Load the variable prerequisites into the course object
@@ -141,6 +170,19 @@ void LoadDataStructure(BST* structure, const std::string& filePath) {
 
 void PrintCourseList(BST* structure) {
     structure->PrintInOrder();
+}
+
+void PrintCourse(BST* structure, const std::string& courseName) {
+    std::optional<Course*> course = structure->Find(courseName);
+    if (course.has_value()) {
+        std::cout << course.value()->name << ", " << course.value()->description << std::endl;
+        std::cout << "Prerequisites: ";
+        for (const auto& prerequisite : course.value()->prerequisites) {
+            std::cout << prerequisite << " ";
+        }
+    } else {
+        std::cerr << "Course not found." << std::endl;
+    }
 }
 // --- END MENU FUNCTIONS ---
 
@@ -159,7 +201,8 @@ std::optional<MenuOption> GetUserInput() {
     // Get user input from stdin
     std::cin >> userInput;
 
-    if (std::cin.fail()) {              // Check if user input is valid (i.e. not empty, wrong type, etc...)
+    // Check if user input is valid (i.e. not empty, wrong type, etc...)
+    if (std::cin.fail()) {
         std::cin.clear();               // Clear the error flag
         std::cin.ignore(9999999, '\n'); // Ignores 9999999 characters up to the next newline character
         std::cerr << "Invalid input. Please enter a valid menu option." << std::endl;
@@ -189,6 +232,7 @@ MenuOption GetValidMenuSelection() {
 
 bool MainMenu(BST* structure, const std::string& filePath) {
     MenuOption userSelection = GetValidMenuSelection();
+    std::string inputCourseName;
 
     switch (userSelection) {
         case MenuOption::LOAD_DATA_STRUCTURE:
@@ -200,12 +244,13 @@ bool MainMenu(BST* structure, const std::string& filePath) {
             PrintCourseList(structure);
             break;
         case MenuOption::PRINT_COURSE:
-            std::cout << "Printing course..." << std::endl;
+            std::cout << "Enter the course name: ";
+            std::cin >> inputCourseName;
+            PrintCourse(structure, inputCourseName);
             break;
         case MenuOption::EXIT_PROGRAM:
             std::cout << "Exiting program..." << std::endl;
             return false;
-            break;
     }
 
     return true;
