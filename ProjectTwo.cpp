@@ -1,8 +1,11 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <algorithm>
 
 // --- GLOBAL VARIABLES ---
 enum class MenuOption { LOAD_DATA_STRUCTURE, PRINT_COURSE_LIST, PRINT_COURSE, EXIT_PROGRAM };
@@ -11,6 +14,14 @@ const std::unordered_map<ushort, MenuOption> MENU_OPTIONS_MAP = {{1, MenuOption:
                                                                  {3, MenuOption::PRINT_COURSE},
                                                                  {9, MenuOption::EXIT_PROGRAM}};
 // --- END GLOBAL VARIABLES ---
+
+// --- COURSE OBJECT ---
+struct Course {
+    std::string name;
+    std::string description;
+    std::vector<std::string> prerequisites;
+};
+// --- END COURSE OBJECT ---
 
 // --- BINARY SEARCH TREE ---
 struct Node {
@@ -22,7 +33,7 @@ struct Node {
 };
 
 class BST {
-public:
+  public:
     BST() : root(nullptr) {}
 
     void Insert(const std::string& value) {
@@ -33,7 +44,7 @@ public:
         PrintInOrderRec(root);
     }
 
-private:
+  private:
     Node* root;
 
     Node* InsertRec(Node* node, const std::string& value) {
@@ -61,21 +72,69 @@ private:
 // --- END BINARY SEARCH TREE ---
 
 // --- MENU FUNCTIONS ---
-void LoadDataStructure(BST* structure) {
-    // TEST DATA
-    structure->Insert("banana");
-    structure->Insert("apple");
-    structure->Insert("cherry");
-    structure->Insert("date");
-    structure->Insert("4fig");
-    structure->Insert("12grape");
+void LoadDataStructure(BST* structure, const std::string& filePath) {
+    // OPEN FILE
+    std::ifstream file(filePath);
+    if (!file.is_open()) { // Check if the file was opened successfully
+        std::cerr << "Could not open the file!" << std::endl;
+        return;
+    }
+
+    // READ FILE
+    std::vector<std::vector<std::string>> data; // 2D vector to store all of the csv data
+    std::string line;                           // Represents a single line of the file
+
+    while (std::getline(file, line)) { // Read the file line by line (Will do this until the end of the file)
+        // HACK: Remove carriage return characters from the line
+        // This is needed because it could cause undefined behavior
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        std::stringstream ss(line);   // Create a stringstream from the line
+        std::string value;            // Represents a single value in a row
+        std::vector<std::string> row; // Represents a single row of the csv file
+
+        while (std::getline(ss, value, ',')) { // Read each value in the row
+            if (value.empty()) {               // Check if the value is empty
+                continue;                      // Skip the empty value
+            }
+
+            row.push_back(value); // Add the value to the row
+        }
+
+        data.push_back(row); // Add the row to the 2D vector
+    }
+
+    // PROCESS DATA
+    for (const auto& row : data) {
+        Course course;
+
+        // Load the name and description of the course into the course object
+        course.name        = row[0];
+        course.description = row[1];
+
+        // Load the variable prerequisites into the course object
+        for (int i = 2; i < row.size(); ++i) {
+            course.prerequisites.push_back(row[i]);
+        }
+
+        // --- DEBUG ---
+        std::cout << "Course Name: " << course.name << std::endl;
+        std::cout << "Course Description: " << course.description << std::endl;
+        std::cout << "Course Prerequisites: ";
+        for (const auto& prerequisite : course.prerequisites) {
+            std::cout << prerequisite << " ";
+        }
+        std::cout << std::endl;
+        // --- END DEBUG ---
+
+        // TODO: structure->Insert(course);
+    }
 }
 
 void PrintCourseList(BST* structure) {
     structure->PrintInOrder();
 }
 // --- END MENU FUNCTIONS ---
-
 
 // --- MENU ---
 void DisplayMenuOptions() {
@@ -120,13 +179,13 @@ MenuOption GetValidMenuSelection() {
     }
 }
 
-bool MainMenu(BST* structure) {
+bool MainMenu(BST* structure, const std::string& filePath) {
     MenuOption userSelection = GetValidMenuSelection();
 
     switch (userSelection) {
         case MenuOption::LOAD_DATA_STRUCTURE:
             std::cout << "Loading data structure..." << std::endl;
-            LoadDataStructure(structure);
+            LoadDataStructure(structure, filePath);
             break;
         case MenuOption::PRINT_COURSE_LIST:
             std::cout << "Printing course list..." << std::endl;
@@ -177,7 +236,8 @@ int main(int argc, char* argv[]) {
 
     // APPLICATION LOOP
     while (isRunning) {
-        isRunning = MainMenu(&structure); // MainMenu() returns a boolean value indicating whether the program should continue
+        // MainMenu() returns a boolean value indicating whether the program should continue
+        isRunning = MainMenu(&structure, filePath);
     }
 
     return 0;
